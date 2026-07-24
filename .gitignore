@@ -1,0 +1,9 @@
+.dotnet-home/
+.nuget-packages/
+.build-appdata/
+**/bin/
+**/obj/
+**/data/
+portable-stage/
+codex仪表盘/
+*.zip
