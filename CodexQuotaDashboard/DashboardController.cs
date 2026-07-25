@@ -59,7 +59,10 @@ public sealed class DashboardController : IDisposable
         _pointerTimer.Start();
         _idleTimer.Tick += async (_, _) =>
         {
-            if (DateTimeOffset.Now - _lastQuery >= TimeSpan.FromMinutes(_settings.IdleRefreshMinutes))
+            var refreshMinutes = _activity.IsRunning
+                ? _settings.MinimumRefreshMinutes
+                : _settings.IdleRefreshMinutes;
+            if (DateTimeOffset.Now - _lastQuery >= TimeSpan.FromMinutes(refreshMinutes))
                 await RefreshAsync(false);
         };
         _idleTimer.Start();
@@ -195,6 +198,8 @@ public sealed class DashboardController : IDisposable
             _activity = value;
             _hover.UpdateData(_quota, _activity, _previewSettings ?? _settings);
             UpdateIcon();
+            if (!wasRunning && value.IsRunning)
+                await RefreshAsync(false);
             if (wasRunning && !value.IsRunning)
                 await RefreshAsync(false);
         });
@@ -204,7 +209,10 @@ public sealed class DashboardController : IDisposable
     {
         if (!force && DateTimeOffset.Now - _lastQuery < TimeSpan.FromMinutes(_settings.MinimumRefreshMinutes))
             return;
-        if (!await _refreshGate.WaitAsync(0)) return;
+        if (force)
+            await _refreshGate.WaitAsync(_shutdown.Token);
+        else if (!await _refreshGate.WaitAsync(0))
+            return;
         try
         {
             _lastQuery = DateTimeOffset.Now;

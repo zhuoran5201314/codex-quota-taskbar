@@ -31,10 +31,11 @@ public sealed class CodexAppServerClient
         try
         {
             process.Start();
+            var initializeId = NextId();
             await SendAsync(process, new
             {
                 method = "initialize",
-                id = NextId(),
+                id = initializeId,
                 @params = new
                 {
                     clientInfo = new { name = "codex-quota-dashboard", title = "Codex 额度仪表盘", version = "0.1.0" },
@@ -42,7 +43,7 @@ public sealed class CodexAppServerClient
                 }
             });
 
-            var initialized = await ReadResponseAsync(process, 1, TimeSpan.FromSeconds(5), cancellationToken);
+            var initialized = await ReadResponseAsync(process, initializeId, TimeSpan.FromSeconds(5), cancellationToken);
             if (initialized is null)
                 return Error("Codex 服务初始化超时");
 

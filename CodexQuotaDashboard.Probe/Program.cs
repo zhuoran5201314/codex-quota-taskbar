@@ -2,6 +2,8 @@ using System.Text.Json;
 using CodexQuotaDashboard;
 
 var client = new CodexAppServerClient();
-var value = await client.ReadRateLimitsAsync(CancellationToken.None);
-Console.WriteLine(JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true }));
-return value.IsAvailable ? 0 : 1;
+var first = await client.ReadRateLimitsAsync(CancellationToken.None);
+var second = await client.ReadRateLimitsAsync(CancellationToken.None);
+Console.WriteLine(JsonSerializer.Serialize(new { First = first, Second = second },
+    new JsonSerializerOptions { WriteIndented = true }));
+return first.IsAvailable && second.IsAvailable ? 0 : 1;
