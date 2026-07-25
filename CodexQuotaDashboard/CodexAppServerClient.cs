@@ -203,13 +203,75 @@ public sealed class CodexAppServerClient
     private static string? LocateCodex()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var candidates = new[]
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var candidates = new List<string?>
         {
+            Environment.GetEnvironmentVariable("CODEX_QUOTA_CODEX_PATH"),
             Path.Combine(home, ".codex", ".sandbox-bin", "codex.exe"),
             Path.Combine(home, ".codex", "bin", "codex.exe"),
+            FindDesktopAppBinary(localAppData),
+            FindRunningCodexBinary(),
+            FindOnPath("codex.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "npm", "codex.cmd")
         };
-        return candidates.FirstOrDefault(File.Exists);
+        return candidates.FirstOrDefault(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path));
+    }
+
+    private static string? FindDesktopAppBinary(string localAppData)
+    {
+        var binRoot = Path.Combine(localAppData, "OpenAI", "Codex", "bin");
+        try
+        {
+            if (!Directory.Exists(binRoot)) return null;
+            return Directory.EnumerateFiles(binRoot, "codex.exe", SearchOption.AllDirectories)
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? FindRunningCodexBinary()
+    {
+        try
+        {
+            foreach (var process in Process.GetProcessesByName("codex"))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        var path = process.MainModule?.FileName;
+                        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                            return path;
+                    }
+                    catch
+                    {
+                        // Some packaged processes do not expose MainModule. Continue with other locations.
+                    }
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private static string? FindOnPath(string fileName)
+    {
+        var pathValue = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrWhiteSpace(pathValue)) return null;
+        foreach (var directory in pathValue.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            try
+            {
+                var candidate = Path.Combine(directory.Trim().Trim('"'), fileName);
+                if (File.Exists(candidate)) return candidate;
+            }
+            catch { }
+        }
+        return null;
     }
 
     private static QuotaSnapshot Error(string message) => new()

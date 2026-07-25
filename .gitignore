@@ -1,10 +1,12 @@
 .dotnet-home/
+.dotnet-sdk/
+.dotnet-install.ps1
 .nuget-packages/
 .build-appdata/
 **/bin/
 **/obj/
 **/data/
-portable-stage/
+portable-stage*/
 codex仪表盘/
 *.zip
 poster/*-v2.png

@@ -139,8 +139,8 @@ public sealed class HoverWindow : Window
         _remaining.Text = _quota.RemainingPercent is double remaining ? $"{remaining:0}% 剩余" : "--  暂无数据";
         _reset.Text = _quota.ResetsAt is DateTimeOffset reset ? $"重置 {reset.ToLocalTime():M月d日 HH:mm}" : "重置时间未知";
         _countdown.Text = _quota.ResetsAt is DateTimeOffset time ? FormatCountdown(time - DateTimeOffset.Now) : "";
-        _status.Text = _quota.IsAvailable ? "● 已同步" : "● 缓存/离线";
-        _status.Foreground = new SolidColorBrush(_quota.IsAvailable
+        _status.Text = _quota.IsLive ? "● 已同步" : "● 缓存/离线";
+        _status.Foreground = new SolidColorBrush(_quota.IsLive
             ? Color.FromRgb(97, 220, 164) : Color.FromRgb(170, 177, 190));
         _task.Text = _activity.IsRunning
             ? $"正在执行  ·  {_activity.ActiveCount} 个活动任务  ·  {FormatDuration(_activity.StartedAt)}"

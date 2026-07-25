@@ -32,6 +32,10 @@ public sealed class QuotaSnapshot
     public string Source { get; set; } = "";
     public string Error { get; set; } = "";
     [JsonIgnore] public bool IsAvailable => RemainingPercent is not null;
+    [JsonIgnore] public bool IsLive =>
+        IsAvailable &&
+        Source.Equals("Codex 官方接口", StringComparison.Ordinal) &&
+        string.IsNullOrWhiteSpace(Error);
 }
 
 public sealed class ActivitySnapshot
